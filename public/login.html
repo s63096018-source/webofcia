@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CIA — Secure Access Portal</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦅</text></svg>">
+</head>
+<body>
+  <div class="login-page">
+    <div class="login-bg"></div>
+    <div class="login-grid"></div>
+
+    <div class="login-container">
+      <div class="login-card">
+        <div class="login-header">
+          <div class="login-seal">
+            <img src="/images/cia-logo.svg" alt="" class="cia-logo-img cia-logo-img--lg" width="52" height="52">
+          </div>
+          <h1>Central Intelligence Agency</h1>
+          <p>Field Operations — Secure Reports Portal</p>
+        </div>
+
+        <div class="classified-banner">
+          Authorized personnel only
+        </div>
+
+        <div id="loginError" class="error-msg"></div>
+
+        <form id="loginForm">
+          <div class="form-group">
+            <label for="username">Operative ID</label>
+            <input type="text" id="username" class="form-input" placeholder="Enter username" autocomplete="username" required>
+          </div>
+          <div class="form-group">
+            <label for="password">Access Code</label>
+            <input type="password" id="password" class="form-input" placeholder="Enter password" autocomplete="current-password" required>
+          </div>
+          <button type="submit" class="btn btn-primary btn-block" id="loginBtn">
+            Sign in
+          </button>
+        </form>
+
+        <p class="login-footer">All access attempts are logged and monitored.</p>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/login.js"></script>
+</body>
+</html>
