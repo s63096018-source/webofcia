@@ -5,6 +5,7 @@ const { initDatabase } = require('./database');
 const authRoutes = require('./routes/auth');
 const reportRoutes = require('./routes/reports');
 const logRoutes = require('./routes/logs');
+const rosterRoutes = require('./routes/roster');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -18,6 +19,7 @@ app.use(cookieParser());
 app.use('/api/auth', authRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/logs', logRoutes);
+app.use('/api/roster', rosterRoutes);
 
 app.use(express.static(path.join(__dirname, 'public')));
 

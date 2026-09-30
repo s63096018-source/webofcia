@@ -73,6 +73,22 @@ const API = {
   getLogs(params = {}) {
     const qs = new URLSearchParams(params).toString();
     return this.request(`/api/logs${qs ? '?' + qs : ''}`);
+  },
+
+  getRoster() {
+    return this.request('/api/roster');
+  },
+
+  createRosterEntry(entry) {
+    return this.request('/api/roster', { method: 'POST', body: JSON.stringify(entry) });
+  },
+
+  updateRosterEntry(id, entry) {
+    return this.request(`/api/roster/${id}`, { method: 'PUT', body: JSON.stringify(entry) });
+  },
+
+  deleteRosterEntry(id) {
+    return this.request(`/api/roster/${id}`, { method: 'DELETE' });
   }
 };
 

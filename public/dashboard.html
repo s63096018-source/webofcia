@@ -33,6 +33,10 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><line x1="8" y1="7" x2="16" y2="7"/><line x1="8" y1="11" x2="16" y2="11"/><line x1="8" y1="15" x2="12" y2="15"/></svg>
           <span>Activity Logs</span>
         </button>
+        <button class="nav-item" data-view="roster">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 4v16M3 10h18M3 15h18"/></svg>
+          <span>Agent Roster</span>
+        </button>
       </nav>
 
       <div class="command-tools">
@@ -140,13 +144,78 @@
             <option value="REPORT_CREATE">Report Created</option>
             <option value="REPORT_UPDATE">Report Updated</option>
             <option value="REPORT_DELETE">Report Deleted</option>
+            <option value="ROSTER_CREATE">Roster Entry Added</option>
+            <option value="ROSTER_UPDATE">Roster Entry Updated</option>
+            <option value="ROSTER_DELETE">Roster Entry Deleted</option>
           </select>
         </div>
         <div id="logsContainer">
           <div class="loading-spinner"><div class="spinner"></div></div>
         </div>
       </div>
+
+      <div class="page-content" id="rosterView" hidden>
+        <div class="roster-toolbar">
+          <div>
+            <p class="section-label">Personnel directory</p>
+            <p class="roster-description">Agent ranks, identifiers, and responsibilities.</p>
+          </div>
+          <div class="roster-toolbar-actions">
+            <span class="roster-count" id="rosterCount">0 personnel</span>
+            <button class="btn btn-primary btn-sm" id="addRosterEntryBtn" hidden>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Add Personnel
+            </button>
+          </div>
+        </div>
+        <div id="rosterContainer">
+          <div class="loading-spinner"><div class="spinner"></div></div>
+        </div>
+      </div>
     </main>
+  </div>
+
+  <!-- Create/Edit Agent Roster Entry Modal -->
+  <div class="modal-overlay" id="rosterFormModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="rosterFormTitle">Add Personnel</h2>
+        <button class="modal-close" data-close="rosterFormModal">&times;</button>
+      </div>
+      <div class="modal-body modal-scroll">
+        <form id="rosterForm">
+          <input type="hidden" id="rosterEntryId">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="rosterRank">Rank</label>
+              <input type="text" id="rosterRank" class="form-input" maxlength="100" required placeholder="e.g. Senior Field Agent">
+            </div>
+            <div class="form-group">
+              <label for="rosterName">Full Name</label>
+              <input type="text" id="rosterName" class="form-input" maxlength="120" required placeholder="Agent name">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="rosterDiscordId">Discord ID</label>
+              <input type="text" id="rosterDiscordId" class="form-input mono" maxlength="120" placeholder="Discord ID">
+            </div>
+            <div class="form-group">
+              <label for="rosterCitizenId">Citizen ID</label>
+              <input type="text" id="rosterCitizenId" class="form-input mono" maxlength="120" placeholder="FiveM citizen ID">
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="rosterResponsibility">Responsibility</label>
+            <textarea id="rosterResponsibility" class="form-textarea" maxlength="500" placeholder="Department, assignment, or duty"></textarea>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-close="rosterFormModal">Cancel</button>
+        <button class="btn btn-primary" id="saveRosterEntryBtn">Save Entry</button>
+      </div>
+    </div>
   </div>
 
   <!-- View Report Modal -->

@@ -153,6 +153,7 @@ const userAvatar = document.getElementById('userAvatar');
 const userName = document.getElementById('userName');
 const userRole = document.getElementById('userRole');
 const newReportBtn = document.getElementById('newReportBtn');
+const addRosterEntryBtn = document.getElementById('addRosterEntryBtn');
 const reportsContainer = document.getElementById('reportsContainer');
 const searchInput = document.getElementById('searchInput');
 const filterStatus = document.getElementById('filterStatus');
@@ -176,6 +177,7 @@ function initUser() {
 
   if (isAdmin()) {
     document.getElementById('logsNavItem').hidden = false;
+    addRosterEntryBtn.hidden = false;
   }
 }
 
@@ -190,23 +192,26 @@ function tickClock() {
 }
 
 function switchView(view) {
-  const reportsView = document.getElementById('reportsView');
-  const logsView = document.getElementById('logsView');
+  if (!['reports', 'logs', 'roster'].includes(view) || (view === 'logs' && !isAdmin())) return;
+
+  document.getElementById('reportsView').hidden = view !== 'reports';
+  document.getElementById('logsView').hidden = view !== 'logs';
+  document.getElementById('rosterView').hidden = view !== 'roster';
+
   if (view === 'logs') {
-    if (!isAdmin()) return;
-    reportsView.hidden = true;
-    logsView.hidden = false;
     document.getElementById('pageKicker').textContent = 'Directorate';
     document.getElementById('pageTitle').textContent = 'Activity Logs';
-    newReportBtn.style.display = 'none';
     loadLogs();
+  } else if (view === 'roster') {
+    document.getElementById('pageKicker').textContent = 'Human Resources';
+    document.getElementById('pageTitle').textContent = 'Agent Roster';
+    loadRoster();
   } else {
-    reportsView.hidden = false;
-    logsView.hidden = true;
     document.getElementById('pageKicker').textContent = 'Operations Desk';
     document.getElementById('pageTitle').textContent = 'Field Reports';
-    if (canWrite()) newReportBtn.style.display = 'inline-flex';
   }
+
+  newReportBtn.style.display = view === 'reports' && canWrite() ? 'inline-flex' : 'none';
 
   document.querySelectorAll('.nav-item').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.view === view);
@@ -215,6 +220,127 @@ function switchView(view) {
 
 document.querySelectorAll('.nav-item').forEach(btn => {
   btn.addEventListener('click', () => switchView(btn.dataset.view));
+});
+
+function openRosterForm(entry = null) {
+  if (!isAdmin()) return;
+  document.getElementById('rosterForm').reset();
+  document.getElementById('rosterEntryId').value = entry?.id || '';
+  document.getElementById('rosterRank').value = entry?.rank || '';
+  document.getElementById('rosterName').value = entry?.name || '';
+  document.getElementById('rosterDiscordId').value = entry?.discordId || '';
+  document.getElementById('rosterCitizenId').value = entry?.citizenId || '';
+  document.getElementById('rosterResponsibility').value = entry?.responsibility || '';
+  document.getElementById('rosterFormTitle').textContent = entry ? 'Edit Personnel' : 'Add Personnel';
+  document.getElementById('saveRosterEntryBtn').textContent = entry ? 'Save Changes' : 'Save Entry';
+  openModal('rosterFormModal');
+}
+
+async function loadRoster() {
+  const container = document.getElementById('rosterContainer');
+  container.innerHTML = '<div class="loading-spinner"><div class="spinner"></div></div>';
+
+  try {
+    const entries = await API.getRoster();
+    if (!Array.isArray(entries)) throw new Error('The roster response has an unexpected format.');
+    renderRoster(entries);
+  } catch (err) {
+    container.innerHTML = `<div class="empty-state"><h3>Failed to load roster</h3><p>${escapeHtml(err.message)}</p></div>`;
+  }
+}
+
+function renderRoster(entries) {
+  const container = document.getElementById('rosterContainer');
+  document.getElementById('rosterCount').textContent = `${entries.length} ${entries.length === 1 ? 'person' : 'personnel'}`;
+
+  if (!entries.length) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <h3>No personnel listed</h3>
+        <p>${isAdmin() ? 'Add the first agent to start the roster.' : 'The personnel roster has not been filled in yet.'}</p>
+      </div>`;
+    return;
+  }
+
+  const actionHeading = isAdmin() ? '<th>Actions</th>' : '';
+  container.innerHTML = `
+    <div class="roster-table-wrap">
+      <table class="roster-table">
+        <thead><tr>
+          <th>Rank</th><th>Name</th><th>Discord ID</th><th>Citizen ID</th><th>Responsibility</th>${actionHeading}
+        </tr></thead>
+        <tbody>
+          ${entries.map(entry => `
+            <tr>
+              <td><span class="roster-rank">${escapeHtml(entry.rank)}</span></td>
+              <td class="roster-name">${escapeHtml(entry.name)}</td>
+              <td class="mono">${escapeHtml(entry.discordId || '—')}</td>
+              <td class="mono">${escapeHtml(entry.citizenId || '—')}</td>
+              <td class="roster-responsibility">${escapeHtml(entry.responsibility || '—')}</td>
+              ${isAdmin() ? `<td class="roster-row-actions">
+                <button class="btn btn-secondary btn-sm" data-roster-edit="${entry.id}">Edit</button>
+                <button class="btn btn-danger btn-sm" data-roster-delete="${entry.id}">Delete</button>
+              </td>` : ''}
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>`;
+
+  if (!isAdmin()) return;
+  container.querySelectorAll('[data-roster-edit]').forEach(button => {
+    button.addEventListener('click', () => {
+      const entry = entries.find(item => item.id === Number(button.dataset.rosterEdit));
+      if (entry) openRosterForm(entry);
+    });
+  });
+  container.querySelectorAll('[data-roster-delete]').forEach(button => {
+    button.addEventListener('click', async () => {
+      const entry = entries.find(item => item.id === Number(button.dataset.rosterDelete));
+      if (!entry || !window.confirm(`Delete ${entry.name} from the roster?`)) return;
+      try {
+        await API.deleteRosterEntry(entry.id);
+        showToast('Personnel entry deleted.');
+        loadRoster();
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    });
+  });
+}
+
+addRosterEntryBtn.addEventListener('click', () => openRosterForm());
+
+document.getElementById('saveRosterEntryBtn').addEventListener('click', async () => {
+  if (!isAdmin()) return;
+  const form = document.getElementById('rosterForm');
+  if (!form.reportValidity()) return;
+
+  const id = document.getElementById('rosterEntryId').value;
+  const entry = {
+    rank: document.getElementById('rosterRank').value,
+    name: document.getElementById('rosterName').value,
+    discordId: document.getElementById('rosterDiscordId').value,
+    citizenId: document.getElementById('rosterCitizenId').value,
+    responsibility: document.getElementById('rosterResponsibility').value
+  };
+  const button = document.getElementById('saveRosterEntryBtn');
+  button.disabled = true;
+  try {
+    if (id) {
+      await API.updateRosterEntry(id, entry);
+      showToast('Personnel entry updated.');
+    } else {
+      await API.createRosterEntry(entry);
+      showToast('Personnel entry added.');
+    }
+    closeModal('rosterFormModal');
+    loadRoster();
+  } catch (err) {
+    showToast(err.message, 'error');
+  } finally {
+    button.disabled = false;
+  }
 });
 
 function showToast(message, type = 'success') {
@@ -689,7 +815,10 @@ function logActionClass(action) {
     LOGOUT: 'log-logout',
     REPORT_CREATE: 'log-create',
     REPORT_UPDATE: 'log-update',
-    REPORT_DELETE: 'log-delete'
+    REPORT_DELETE: 'log-delete',
+    ROSTER_CREATE: 'log-create',
+    ROSTER_UPDATE: 'log-update',
+    ROSTER_DELETE: 'log-delete'
   };
   return map[action] || 'log-login';
 }

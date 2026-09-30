@@ -22,6 +22,7 @@ A secure web portal for managing CIA field operation reports in your FiveM GTA 5
   - Image evidence attachments
 - **Premium dark intelligence-agency UI**
 - **Search and filter** by status, classification, priority
+- **Agent Roster** for ranks, names, Discord IDs, citizen IDs, and responsibilities. All signed-in roles can view it; Full Access can add, edit, and delete entries.
 - **SQLite database** — all data persists locally
 
 ## Quick Start
@@ -62,7 +63,8 @@ crafting/
 ├── middleware/auth.js  # JWT authentication
 ├── routes/
 │   ├── auth.js         # Login/logout
-│   └── reports.js      # Report CRUD + file uploads
+│   ├── reports.js      # Report CRUD + file uploads
+│   └── roster.js       # Agent roster, editable by Full Access
 ├── public/
 │   ├── css/style.css   # Premium CIA theme
 │   ├── js/             # Frontend logic

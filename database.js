@@ -70,10 +70,22 @@ function initDatabase() {
       FOREIGN KEY (user_id) REFERENCES users(id)
     );
 
+    CREATE TABLE IF NOT EXISTS agent_roster (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      rank TEXT NOT NULL,
+      name TEXT NOT NULL,
+      discord_id TEXT,
+      citizen_id TEXT,
+      responsibility TEXT,
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now'))
+    );
+
     CREATE INDEX IF NOT EXISTS idx_reports_number ON reports(report_number);
     CREATE INDEX IF NOT EXISTS idx_reports_date ON reports(incident_date);
     CREATE INDEX IF NOT EXISTS idx_reports_status ON reports(status);
     CREATE INDEX IF NOT EXISTS idx_logs_created ON activity_logs(created_at);
+    CREATE INDEX IF NOT EXISTS idx_agent_roster_name ON agent_roster(name);
   `);
 
   migrateRoles();
