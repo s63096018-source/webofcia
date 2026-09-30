@@ -541,6 +541,19 @@ function renderFilePreviews() {
 
 const fileUploadArea = document.getElementById('fileUploadArea');
 const evidenceInput = document.getElementById('evidenceInput');
+const MAX_EVIDENCE_FILES = 20;
+
+function addEvidenceFiles(files) {
+  const images = Array.from(files).filter(file => file.type.startsWith('image/'));
+  const remainingSlots = MAX_EVIDENCE_FILES - selectedFiles.length;
+  selectedFiles.push(...images.slice(0, remainingSlots));
+
+  if (images.length > remainingSlots) {
+    showToast(`You can attach up to ${MAX_EVIDENCE_FILES} images per upload.`, 'error');
+  }
+
+  renderFilePreviews();
+}
 
 fileUploadArea.addEventListener('click', () => evidenceInput.click());
 
@@ -556,14 +569,12 @@ fileUploadArea.addEventListener('dragleave', () => {
 fileUploadArea.addEventListener('drop', (e) => {
   e.preventDefault();
   fileUploadArea.classList.remove('dragover');
-  selectedFiles.push(...Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/')));
-  renderFilePreviews();
+  addEvidenceFiles(e.dataTransfer.files);
 });
 
 evidenceInput.addEventListener('change', () => {
-  selectedFiles.push(...Array.from(evidenceInput.files));
+  addEvidenceFiles(evidenceInput.files);
   evidenceInput.value = '';
-  renderFilePreviews();
 });
 
 document.getElementById('saveReportBtn').addEventListener('click', async () => {

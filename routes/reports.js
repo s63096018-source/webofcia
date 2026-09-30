@@ -7,6 +7,7 @@ const { db, getNextReportNumber, logActivity } = require('../database');
 const { authenticate, requireAgentOrAdmin, canMutateReport } = require('../middleware/auth');
 
 const router = express.Router();
+const MAX_EVIDENCE_FILES = 20;
 
 const uploadsDir = path.join(__dirname, '..', 'public', 'uploads');
 if (!fs.existsSync(uploadsDir)) {
@@ -23,7 +24,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({
   storage,
-  limits: { fileSize: 10 * 1024 * 1024, files: 10 },
+  limits: { fileSize: 10 * 1024 * 1024, files: MAX_EVIDENCE_FILES },
   fileFilter: (req, file, cb) => {
     const allowed = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
     const ext = path.extname(file.originalname).toLowerCase();
@@ -133,7 +134,7 @@ router.get('/:id', authenticate, (req, res) => {
   res.json(formatReport(row, getEvidenceForReport(row.id)));
 });
 
-router.post('/', authenticate, requireAgentOrAdmin, upload.array('evidence', 10), (req, res) => {
+router.post('/', authenticate, requireAgentOrAdmin, upload.array('evidence', MAX_EVIDENCE_FILES), (req, res) => {
   try {
     const {
       title, description, reporter, reporterCallsign, unitCallsigns,
@@ -197,7 +198,7 @@ router.post('/', authenticate, requireAgentOrAdmin, upload.array('evidence', 10)
   }
 });
 
-router.put('/:id', authenticate, requireAgentOrAdmin, upload.array('evidence', 10), (req, res) => {
+router.put('/:id', authenticate, requireAgentOrAdmin, upload.array('evidence', MAX_EVIDENCE_FILES), (req, res) => {
   try {
     const existing = db.prepare('SELECT * FROM reports WHERE id = ?').get(req.params.id);
     if (!existing) {
