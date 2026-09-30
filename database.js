@@ -77,6 +77,7 @@ function initDatabase() {
       discord_id TEXT,
       citizen_id TEXT,
       responsibility TEXT,
+      sort_order INTEGER NOT NULL DEFAULT 0,
       created_at TEXT DEFAULT (datetime('now')),
       updated_at TEXT DEFAULT (datetime('now'))
     );
@@ -85,9 +86,9 @@ function initDatabase() {
     CREATE INDEX IF NOT EXISTS idx_reports_date ON reports(incident_date);
     CREATE INDEX IF NOT EXISTS idx_reports_status ON reports(status);
     CREATE INDEX IF NOT EXISTS idx_logs_created ON activity_logs(created_at);
-    CREATE INDEX IF NOT EXISTS idx_agent_roster_name ON agent_roster(name);
   `);
 
+  ensureAgentRosterOrder();
   migrateRoles();
 
   const userCount = db.prepare('SELECT COUNT(*) as count FROM users').get().count;
@@ -96,6 +97,15 @@ function initDatabase() {
   } else {
     ensureDefaultAccounts();
   }
+}
+
+function ensureAgentRosterOrder() {
+  const columns = db.pragma('table_info(agent_roster)');
+  if (!columns.some(column => column.name === 'sort_order')) {
+    db.exec('ALTER TABLE agent_roster ADD COLUMN sort_order INTEGER NOT NULL DEFAULT 0');
+    db.prepare('UPDATE agent_roster SET sort_order = id WHERE sort_order = 0').run();
+  }
+  db.exec('CREATE INDEX IF NOT EXISTS idx_agent_roster_order ON agent_roster(sort_order, id)');
 }
 
 function migrateRoles() {

@@ -22,7 +22,7 @@ A secure web portal for managing CIA field operation reports in your FiveM GTA 5
   - Image evidence attachments
 - **Premium dark intelligence-agency UI**
 - **Search and filter** by status, classification, priority
-- **Agent Roster** for ranks, names, Discord IDs, citizen IDs, and responsibilities. All signed-in roles can view it; Full Access can add, edit, and delete entries.
+- **Agent Roster** for ranks, names, Discord IDs, citizen IDs, and responsibilities. All signed-in roles can view it; Full Access can add, edit, delete, and reorder entries.
 - **SQLite database** — all data persists locally
 
 ## Quick Start

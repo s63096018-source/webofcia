@@ -87,6 +87,10 @@ const API = {
     return this.request(`/api/roster/${id}`, { method: 'PUT', body: JSON.stringify(entry) });
   },
 
+  reorderRoster(ids) {
+    return this.request('/api/roster/reorder', { method: 'POST', body: JSON.stringify({ ids }) });
+  },
+
   deleteRosterEntry(id) {
     return this.request(`/api/roster/${id}`, { method: 'DELETE' });
   }

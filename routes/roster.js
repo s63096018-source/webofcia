@@ -38,8 +38,30 @@ function readEntry(body) {
 }
 
 router.get('/', authenticate, (req, res) => {
-  const rows = db.prepare('SELECT * FROM agent_roster ORDER BY id ASC').all();
+  const rows = db.prepare('SELECT * FROM agent_roster ORDER BY sort_order ASC, id ASC').all();
   res.json(rows.map(formatEntry));
+});
+
+router.post('/reorder', authenticate, requireAdmin, (req, res) => {
+  const ids = req.body?.ids;
+  if (!Array.isArray(ids) || ids.some(id => !Number.isInteger(Number(id)) || Number(id) < 1)) {
+    return res.status(400).json({ error: 'Provide the roster entry IDs in the new order.' });
+  }
+
+  const orderedIds = ids.map(Number);
+  if (new Set(orderedIds).size !== orderedIds.length) {
+    return res.status(400).json({ error: 'Roster entry IDs cannot be repeated.' });
+  }
+
+  const currentIds = db.prepare('SELECT id FROM agent_roster ORDER BY sort_order ASC, id ASC').all().map(row => row.id);
+  if (orderedIds.length !== currentIds.length || orderedIds.some(id => !currentIds.includes(id))) {
+    return res.status(400).json({ error: 'The order must include every current roster entry exactly once.' });
+  }
+
+  const updatePosition = db.prepare("UPDATE agent_roster SET sort_order = ?, updated_at = datetime('now') WHERE id = ?");
+  db.transaction(() => orderedIds.forEach((id, index) => updatePosition.run(index + 1, id)))();
+  logActivity(req, 'ROSTER_REORDER', `Reordered ${orderedIds.length} roster entries`);
+  res.json({ message: 'Roster order updated.' });
 });
 
 router.post('/', authenticate, requireAdmin, (req, res) => {
@@ -47,8 +69,8 @@ router.post('/', authenticate, requireAdmin, (req, res) => {
   if (error) return res.status(400).json({ error });
 
   const result = db.prepare(`
-    INSERT INTO agent_roster (rank, name, discord_id, citizen_id, responsibility)
-    VALUES (?, ?, ?, ?, ?)
+    INSERT INTO agent_roster (rank, name, discord_id, citizen_id, responsibility, sort_order)
+    VALUES (?, ?, ?, ?, ?, (SELECT COALESCE(MAX(sort_order), 0) + 1 FROM agent_roster))
   `).run(
     entry.rank,
     entry.name,

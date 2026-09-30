@@ -270,7 +270,7 @@ function renderRoster(entries) {
           <th>Rank</th><th>Name</th><th>Discord ID</th><th>Citizen ID</th><th>Responsibility</th>${actionHeading}
         </tr></thead>
         <tbody>
-          ${entries.map(entry => `
+          ${entries.map((entry, index) => `
             <tr>
               <td><span class="roster-rank">${escapeHtml(entry.rank)}</span></td>
               <td class="roster-name">${escapeHtml(entry.name)}</td>
@@ -278,6 +278,8 @@ function renderRoster(entries) {
               <td class="mono">${escapeHtml(entry.citizenId || '—')}</td>
               <td class="roster-responsibility">${escapeHtml(entry.responsibility || '—')}</td>
               ${isAdmin() ? `<td class="roster-row-actions">
+                <button class="btn btn-secondary btn-sm roster-move-btn" data-roster-move="-1" data-roster-id="${entry.id}" aria-label="Move ${escapeHtml(entry.name)} up" title="Move up" ${index === 0 ? 'disabled' : ''}>↑</button>
+                <button class="btn btn-secondary btn-sm roster-move-btn" data-roster-move="1" data-roster-id="${entry.id}" aria-label="Move ${escapeHtml(entry.name)} down" title="Move down" ${index === entries.length - 1 ? 'disabled' : ''}>↓</button>
                 <button class="btn btn-secondary btn-sm" data-roster-edit="${entry.id}">Edit</button>
                 <button class="btn btn-danger btn-sm" data-roster-delete="${entry.id}">Delete</button>
               </td>` : ''}
@@ -288,6 +290,25 @@ function renderRoster(entries) {
     </div>`;
 
   if (!isAdmin()) return;
+  container.querySelectorAll('[data-roster-move]').forEach(button => {
+    button.addEventListener('click', async () => {
+      const index = entries.findIndex(item => item.id === Number(button.dataset.rosterId));
+      const targetIndex = index + Number(button.dataset.rosterMove);
+      if (index < 0 || targetIndex < 0 || targetIndex >= entries.length) return;
+
+      const reordered = [...entries];
+      [reordered[index], reordered[targetIndex]] = [reordered[targetIndex], reordered[index]];
+      button.disabled = true;
+      try {
+        await API.reorderRoster(reordered.map(item => item.id));
+        showToast('Roster order updated.');
+        loadRoster();
+      } catch (err) {
+        showToast(err.message, 'error');
+        button.disabled = false;
+      }
+    });
+  });
   container.querySelectorAll('[data-roster-edit]').forEach(button => {
     button.addEventListener('click', () => {
       const entry = entries.find(item => item.id === Number(button.dataset.rosterEdit));
@@ -818,7 +839,8 @@ function logActionClass(action) {
     REPORT_DELETE: 'log-delete',
     ROSTER_CREATE: 'log-create',
     ROSTER_UPDATE: 'log-update',
-    ROSTER_DELETE: 'log-delete'
+    ROSTER_DELETE: 'log-delete',
+    ROSTER_REORDER: 'log-update'
   };
   return map[action] || 'log-login';
 }
